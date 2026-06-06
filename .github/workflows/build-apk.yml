@@ -1,0 +1,60 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    tags:
+      - '*' # Triggers on any tag push, e.g., v1.0.0, 1.2.3
+
+jobs:
+  build-and-release:
+    name: Build and Release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '17'
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install .NET Android Workload
+        run: dotnet workload install android
+
+      - name: Restore NuGet Packages
+        run: dotnet restore Gomoku_Avalonia.slnx
+
+      - name: Publish Android App (APK)
+        run: |
+          dotnet publish Gomoku_Avalonia.Android/Gomoku_Avalonia.Android.csproj \
+            -c Release \
+            -f net10.0-android \
+            -r android-arm64 \
+            /p:AndroidPackageFormat=apk \
+            /p:AcceptAndroidSDKLicenses=True
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Gomoku-Avalonia-Android-APK
+          path: Gomoku_Avalonia.Android/bin/Release/net10.0-android/android-arm64/publish/*.apk
+          if-no-files-found: error
+
+      - name: Create GitHub Release and Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Gomoku_Avalonia.Android/bin/Release/net10.0-android/android-arm64/publish/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

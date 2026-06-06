@@ -1,0 +1,243 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Gomoku_Avalonia.ViewModels"
+             xmlns:views="using:Gomoku_Avalonia.Views"
+             xmlns:models="using:Gomoku_Avalonia.Models"
+             mc:Ignorable="d"
+             d:DesignWidth="420"
+             d:DesignHeight="820"
+             x:Class="Gomoku_Avalonia.Views.MainView"
+             x:DataType="vm:MainViewModel">
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <Grid Background="#111318">
+        <ScrollViewer>
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                  MaxWidth="980"
+                  Margin="16"
+                  HorizontalAlignment="Center">
+                <Grid RowDefinitions="Auto,Auto"
+                      ColumnDefinitions="*,Auto"
+                      Margin="0,0,0,12">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="Gomoku"
+                                   FontSize="28"
+                                   FontWeight="SemiBold"
+                                   Foreground="#f4f1e8" />
+                        <TextBlock Text="{Binding StatusText}"
+                                   FontSize="14"
+                                   Foreground="#b8c0cc" />
+                    </StackPanel>
+                    <Border Grid.Column="1"
+                            Background="#1d232c"
+                            BorderBrush="#303946"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,6"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ScoreText}"
+                                   Foreground="#f4f1e8"
+                                   FontSize="13" />
+                    </Border>
+                </Grid>
+
+                <views:GomokuBoardView Grid.Row="1"
+                                       Board="{Binding Board}"
+                                       MoveVersion="{Binding MoveVersion}"
+                                       LastMove="{Binding LastMove}"
+                                       HintMove="{Binding HintMove}"
+                                       WinningCells="{Binding WinningCells}"
+                                       Skin="{Binding BoardSkin}"
+                                       CellSelectedCommand="{Binding PlaceHumanMoveCommand}"
+                                       Height="560"
+                                       MinHeight="340"
+                                       HorizontalAlignment="Stretch"
+                                       Margin="0,0,0,12" />
+
+                <Grid Grid.Row="2"
+                      RowDefinitions="Auto,Auto"
+                      ColumnDefinitions="*,*"
+                      ColumnSpacing="12"
+                      RowSpacing="12">
+                    <Border Background="#1b2028"
+                            BorderBrush="#303946"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,*"
+                                  ColumnSpacing="8">
+                                <Button Content="New"
+                                        Command="{Binding NewGameCommand}"
+                                        HorizontalAlignment="Stretch" />
+                                <Button Grid.Column="1"
+                                        Content="Undo"
+                                        Command="{Binding UndoCommand}"
+                                        HorizontalAlignment="Stretch" />
+                            </Grid>
+                            <Grid ColumnDefinitions="*,*"
+                                  ColumnSpacing="8">
+                                <Button Content="Hint"
+                                        Command="{Binding RequestHintCommand}"
+                                        HorizontalAlignment="Stretch" />
+                                <Button Grid.Column="1"
+                                        Content="{Binding SkinButtonText}"
+                                        Command="{Binding ToggleSkinCommand}"
+                                        HorizontalAlignment="Stretch" />
+                            </Grid>
+                            <ToggleSwitch IsChecked="{Binding IsAiFirst}"
+                                          Content="{Binding OpeningText}" />
+                            <TextBlock Text="{Binding HintText}"
+                                       Foreground="#9fc7ff"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1"
+                            Background="#1b2028"
+                            BorderBrush="#303946"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="8">
+                                <TextBlock Text="Model"
+                                           VerticalAlignment="Center"
+                                           Foreground="#b8c0cc" />
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding ModelOptions}"
+                                          SelectedItem="{Binding SelectedModel}"
+                                          HorizontalAlignment="Stretch" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="8">
+                                <TextBlock Text="API"
+                                           VerticalAlignment="Center"
+                                           Foreground="#b8c0cc" />
+                                <TextBox Grid.Column="1"
+                                         Text="{Binding ApiBaseUrl}"
+                                         PlaceholderText="https://vukservices.vercel.app" />
+                            </Grid>
+                            <Grid ColumnDefinitions="*,*"
+                                  ColumnSpacing="8">
+                                <Button Content="Save"
+                                        Command="{Binding ApplySettingsCommand}"
+                                        HorizontalAlignment="Stretch" />
+                                <Button Grid.Column="1"
+                                        Content="Settings"
+                                        Command="{Binding OpenSettingsCommand}"
+                                        HorizontalAlignment="Stretch" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="1"
+                            Grid.ColumnSpan="2"
+                            Background="#171b22"
+                            BorderBrush="#303946"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12">
+                        <Grid RowDefinitions="Auto,*">
+                            <TextBlock Text="Move Log"
+                                       Foreground="#f4f1e8"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8" />
+                            <ScrollViewer Grid.Row="1"
+                                          MaxHeight="180">
+                                <ItemsControl ItemsSource="{Binding MoveLog}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="models:MoveLogEntry">
+                                            <Border Padding="0,4">
+                                                <TextBlock Text="{Binding Summary}"
+                                                           Foreground="#cbd3df" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="3"
+                        Margin="0,12,0,0"
+                        IsVisible="{Binding IsBusy}"
+                        Background="#243142"
+                        CornerRadius="6"
+                        Padding="12">
+                    <TextBlock Text="{Binding BusyText}"
+                               Foreground="#f4f1e8"
+                               HorizontalAlignment="Center" />
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <Border IsVisible="{Binding IsSettingsOpen}"
+                Background="#aa080b10">
+            <Border Width="380"
+                    MaxWidth="380"
+                    Background="#202733"
+                    BorderBrush="#3b4655"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="16"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Settings"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="#f4f1e8" />
+                    <TextBlock Text="API Base URL"
+                               Foreground="#b8c0cc" />
+                    <TextBox Text="{Binding ApiBaseUrl}"
+                             PlaceholderText="https://vukservices.vercel.app" />
+                    <TextBlock Text="Model"
+                               Foreground="#b8c0cc" />
+                    <ComboBox ItemsSource="{Binding ModelOptions}"
+                              SelectedItem="{Binding SelectedModel}"
+                              HorizontalAlignment="Stretch" />
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="8">
+                        <Button Content="Cancel"
+                                Command="{Binding CloseSettingsCommand}"
+                                HorizontalAlignment="Stretch" />
+                        <Button Grid.Column="1"
+                                Content="Apply"
+                                Command="{Binding ApplySettingsCommand}"
+                                HorizontalAlignment="Stretch" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <Border IsVisible="{Binding IsExitWarningVisible}"
+                Background="#dd06080c">
+            <Border Width="400"
+                    MaxWidth="400"
+                    Background="#23191b"
+                    BorderBrush="#e15a64"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="18"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Network unavailable"
+                               Foreground="#ffd7db"
+                               FontSize="20"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding ExitCountdownText}"
+                               Foreground="#f4f1e8"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>
