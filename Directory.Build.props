@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin\**;obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Gomoku_Avalonia.Android' and '$(Configuration)' == 'Debug' and '$(OS)' == 'Windows_NT'">
+    <!-- Keep Visual Studio Android deploy paths short enough for Xamarin.Android cleanup/deploy tasks. -->
+    <BaseIntermediateOutputPath>$(TEMP)\GomokuAvalonia\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(TEMP)\GomokuAvalonia\$(MSBuildProjectName)\bin\</BaseOutputPath>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+  </PropertyGroup>
+</Project>

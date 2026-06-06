@@ -2,7 +2,6 @@
   <Project Path="Gomoku_Avalonia.Android/Gomoku_Avalonia.Android.csproj">
     <Deploy />
   </Project>
-  <Project Path="Gomoku_Avalonia.Browser/Gomoku_Avalonia.Browser.csproj" />
   <Project Path="Gomoku_Avalonia.Desktop/Gomoku_Avalonia.Desktop.csproj" />
   <Project Path="Gomoku_Avalonia.iOS/Gomoku_Avalonia.iOS.csproj">
     <Deploy />

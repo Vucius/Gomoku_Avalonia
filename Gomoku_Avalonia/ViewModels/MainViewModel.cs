@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Linq;
@@ -19,10 +20,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private readonly GomokuEngine _engine = new();
     private readonly GomokuApiClient _apiClient;
     private readonly SoundService _soundService;
-    private readonly IAppExitService _exitService;
     private readonly CancellationTokenSource _shutdown = new();
     private readonly string _stateFilePath;
-    private bool _exitCountdownStarted;
 
     [ObservableProperty]
     private int _moveVersion;
@@ -40,7 +39,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private bool _isSettingsOpen;
 
     [ObservableProperty]
-    private bool _isExitWarningVisible;
+    private bool _isNetworkWaitVisible;
 
     [ObservableProperty]
     private BoardSkin _boardSkin = BoardSkin.Wood;
@@ -58,7 +57,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private string _hintText = "No hint yet.";
 
     [ObservableProperty]
-    private string _exitCountdownText = string.Empty;
+    private string _networkStatusText = "Network: not checked";
+
+    [ObservableProperty]
+    private string _networkWaitText = string.Empty;
 
     [ObservableProperty]
     private BoardPoint? _lastMove;
@@ -79,15 +81,14 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private int _draws;
 
     public MainViewModel()
-        : this(new GomokuApiClient(), new SoundService(), new AppExitService())
+        : this(new GomokuApiClient(), new SoundService())
     {
     }
 
-    public MainViewModel(GomokuApiClient apiClient, SoundService soundService, IAppExitService exitService)
+    public MainViewModel(GomokuApiClient apiClient, SoundService soundService)
     {
         _apiClient = apiClient;
         _soundService = soundService;
-        _exitService = exitService;
         _stateFilePath = BuildStateFilePath();
         LoadLocalState();
         ResetGameState();
@@ -114,6 +115,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     public string ScoreText => $"You {PlayerWins} · AI {AiWins} · Draw {Draws}";
 
+    public string CompactScoreText => $"You {PlayerWins} | AI {AiWins} | Draw {Draws}";
+
+    public string MoveLogText => MoveLog.Count == 0
+        ? "No moves yet."
+        : string.Join("   ", MoveLog.TakeLast(3).Select(entry => entry.Summary));
+
     private int HumanPlayer => IsAiFirst ? -1 : 1;
 
     private int AiPlayer => IsAiFirst ? 1 : -1;
@@ -137,18 +144,21 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     partial void OnPlayerWinsChanged(int value)
     {
         OnPropertyChanged(nameof(ScoreText));
+        OnPropertyChanged(nameof(CompactScoreText));
         SaveLocalState();
     }
 
     partial void OnAiWinsChanged(int value)
     {
         OnPropertyChanged(nameof(ScoreText));
+        OnPropertyChanged(nameof(CompactScoreText));
         SaveLocalState();
     }
 
     partial void OnDrawsChanged(int value)
     {
         OnPropertyChanged(nameof(ScoreText));
+        OnPropertyChanged(nameof(CompactScoreText));
         SaveLocalState();
     }
 
@@ -206,6 +216,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             }
         }
 
+        OnPropertyChanged(nameof(MoveLogText));
         IsGameOver = false;
         WinningCells = [];
         HintMove = null;
@@ -304,31 +315,41 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         try
         {
-            var connected = await _apiClient.CheckInternetConnectionAsync(ApiBaseUrl, _shutdown.Token);
-            if (!connected)
+            while (!_shutdown.IsCancellationRequested)
             {
-                _ = StartExitCountdownAsync();
-                return;
-            }
+                try
+                {
+                    var connected = await _apiClient.CheckInternetConnectionAsync(ApiBaseUrl, _shutdown.Token);
+                    if (!connected)
+                    {
+                        await WaitForNetworkRetryAsync("Network unavailable. Waiting for connection...");
+                        continue;
+                    }
 
-            var result = await _apiClient.FetchMoveAsync(
-                ApiBaseUrl,
-                _engine.ToJaggedBoard(),
-                player,
-                _engine.StepCount,
-                SelectedModel,
-                _shutdown.Token);
-            await onSuccess(result);
-        }
-        catch (HttpRequestException)
-        {
-            _ = StartExitCountdownAsync();
-        }
-        catch (TaskCanceledException)
-        {
-            if (!_shutdown.IsCancellationRequested)
-            {
-                _ = StartExitCountdownAsync();
+                    var elapsed = Stopwatch.StartNew();
+                    var result = await _apiClient.FetchMoveAsync(
+                        ApiBaseUrl,
+                        _engine.ToJaggedBoard(),
+                        player,
+                        _engine.StepCount,
+                        SelectedModel,
+                        _shutdown.Token);
+                    elapsed.Stop();
+
+                    IsNetworkWaitVisible = false;
+                    NetworkWaitText = string.Empty;
+                    NetworkStatusText = $"Connected | {elapsed.ElapsedMilliseconds} ms";
+                    await onSuccess(result);
+                    return;
+                }
+                catch (HttpRequestException)
+                {
+                    await WaitForNetworkRetryAsync("Network request failed. Waiting for connection...");
+                }
+                catch (TaskCanceledException) when (!_shutdown.IsCancellationRequested)
+                {
+                    await WaitForNetworkRetryAsync("Network timeout. Waiting for connection...");
+                }
             }
         }
         catch (OperationCanceledException)
@@ -408,6 +429,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private void AddMoveLog(BoardPoint point, int player, bool isAiMove, double? confidence = null)
     {
         MoveLog.Add(new MoveLogEntry(_engine.StepCount, player, point, isAiMove, confidence));
+        OnPropertyChanged(nameof(MoveLogText));
     }
 
     private bool IsLegalMove(int row, int col)
@@ -423,8 +445,10 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     {
         _engine.Reset();
         MoveLog.Clear();
+        OnPropertyChanged(nameof(MoveLogText));
         IsGameOver = false;
-        IsExitWarningVisible = false;
+        IsNetworkWaitVisible = false;
+        NetworkWaitText = string.Empty;
         WinningCells = [];
         LastMove = null;
         HintMove = null;
@@ -440,31 +464,13 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(Board));
     }
 
-    private async Task StartExitCountdownAsync()
+    private async Task WaitForNetworkRetryAsync(string message)
     {
-        if (_exitCountdownStarted)
-        {
-            return;
-        }
-
-        _exitCountdownStarted = true;
-        IsExitWarningVisible = true;
-        StatusText = "Network unavailable.";
-
-        for (var seconds = 3; seconds > 0; seconds--)
-        {
-            ExitCountdownText = $"Network is unavailable. The app will exit in {seconds} seconds.";
-            try
-            {
-                await Task.Delay(TimeSpan.FromSeconds(1), _shutdown.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-        }
-
-        _exitService.Exit();
+        IsNetworkWaitVisible = true;
+        NetworkStatusText = "Waiting for network";
+        NetworkWaitText = $"{message} Retrying in 2 seconds.";
+        StatusText = "Waiting for network connection.";
+        await Task.Delay(TimeSpan.FromSeconds(2), _shutdown.Token);
     }
 
     private void LoadLocalState()

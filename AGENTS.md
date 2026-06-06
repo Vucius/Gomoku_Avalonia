@@ -63,7 +63,7 @@ Gomoku_Avalonia/                          <-- Solution Root
 
 ### Services
 - **`GomokuApiClient.cs`**:
-  - Uses `HttpClient` to communicate with the remote API (`https://vukservices.vercel.app/api/gomoku/move` by default).
+  - Uses `HttpClient` to communicate with the remote API. Android defaults to direct Hugging Face Space access (`https://mitsutake-model-space.hf.space/gomoku/predict`) and still supports the Vercel proxy (`https://vukservices.vercel.app/api/gomoku/move`) when that base URL is configured.
   - Timeout configured at 30 seconds.
   - Handles network connection checks and raises events on loss of connectivity.
 - **`SoundService.cs`**:
@@ -92,6 +92,11 @@ Ensure you have the .NET 10.0 SDK and the Android workloads installed.
 ```bash
 dotnet run --project Gomoku_Avalonia.Desktop/Gomoku_Avalonia.Desktop.csproj
 ```
+
+### Debug Android from Visual Studio
+Debug builds for `Gomoku_Avalonia.Android` intentionally use `Directory.Build.props` to place Android intermediate/output files under `%TEMP%\GomokuAvalonia\...` and set `EmbedAssembliesIntoApk=true`. This avoids `XARDF7024` failures from Xamarin.Android deployment cleanup tasks on long generated paths. Release publish output remains under the project directory.
+
+`Gomoku_Avalonia.Browser` is kept in the repository but omitted from the default `.slnx` build. Building it in the same solution emits a WebAssembly native-reference warning unless `wasm-tools` is installed and native WASM linking is enabled, neither of which is needed for Android debugging.
 
 ### Build & Package Android APK
 ```bash

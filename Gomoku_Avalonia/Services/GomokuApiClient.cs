@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -10,7 +11,9 @@ namespace Gomoku_Avalonia.Services;
 
 public sealed class GomokuApiClient : IDisposable
 {
-    public const string DefaultBaseUrl = "https://vukservices.vercel.app";
+    public const string VercelProxyBaseUrl = "https://vukservices.vercel.app";
+    public const string DirectHuggingFaceBaseUrl = "https://mitsutake-model-space.hf.space";
+    public const string DefaultBaseUrl = DirectHuggingFaceBaseUrl;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -35,13 +38,29 @@ public sealed class GomokuApiClient : IDisposable
         string model,
         CancellationToken cancellationToken = default)
     {
-        var uri = new Uri($"{NormalizeBaseUrl(baseUrl)}/api/gomoku/move");
-        var request = new MoveRequest(board, player, step, model);
+        var endpoint = ResolveEndpoint(baseUrl);
+        if (endpoint.IsHuggingFace)
+        {
+            return await FetchHuggingFaceMoveAsync(endpoint.Uri, board, player, step, model, cancellationToken);
+        }
+
+        return await FetchVercelMoveAsync(endpoint.Uri, board, player, step, model, cancellationToken);
+    }
+
+    public async Task<GomokuMoveResult> FetchVercelMoveAsync(
+        Uri uri,
+        int[][] board,
+        int player,
+        int step,
+        string model,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new VercelMoveRequest(board, player, step, model);
 
         using var response = await _httpClient.PostAsJsonAsync(uri, request, SerializerOptions, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var payload = await response.Content.ReadFromJsonAsync<ApiEnvelope>(SerializerOptions, cancellationToken);
+        var payload = await response.Content.ReadFromJsonAsync<VercelApiEnvelope>(SerializerOptions, cancellationToken);
         if (payload is null)
         {
             throw new InvalidOperationException("The AI service returned an empty response.");
@@ -60,6 +79,31 @@ public sealed class GomokuApiClient : IDisposable
         return new GomokuMoveResult(payload.Data.Row, payload.Data.Col, payload.Data.Confidence);
     }
 
+    public async Task<GomokuMoveResult> FetchHuggingFaceMoveAsync(
+        Uri uri,
+        int[][] board,
+        int player,
+        int step,
+        string model,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new HuggingFaceMoveRequest(FlattenBoard(board), player, step, model);
+
+        using var response = await _httpClient.PostAsJsonAsync(uri, request, SerializerOptions, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var payload = await response.Content.ReadFromJsonAsync<HuggingFaceApiEnvelope>(SerializerOptions, cancellationToken);
+        if (payload?.Prediction is null)
+        {
+            throw new InvalidOperationException("The Hugging Face service response does not contain a prediction.");
+        }
+
+        return new GomokuMoveResult(
+            payload.Prediction.Row,
+            payload.Prediction.Col,
+            payload.Prediction.Confidence);
+    }
+
     public async Task<bool> CheckInternetConnectionAsync(string baseUrl, CancellationToken cancellationToken = default)
     {
         try
@@ -67,7 +111,9 @@ public sealed class GomokuApiClient : IDisposable
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(5));
 
-            using var request = new HttpRequestMessage(HttpMethod.Get, NormalizeBaseUrl(baseUrl));
+            var endpoint = ResolveEndpoint(baseUrl);
+            var healthUri = endpoint.IsHuggingFace ? ResolveHealthUri(endpoint.Uri) : endpoint.Uri;
+            using var request = new HttpRequestMessage(HttpMethod.Get, healthUri);
             using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
             return (int)response.StatusCode < 500;
         }
@@ -92,16 +138,72 @@ public sealed class GomokuApiClient : IDisposable
         return baseUrl.Trim().TrimEnd('/');
     }
 
-    private sealed record MoveRequest(
+    private static ApiEndpoint ResolveEndpoint(string baseUrl)
+    {
+        var normalized = NormalizeBaseUrl(baseUrl);
+        var uri = new Uri(normalized);
+
+        if (IsHuggingFaceUri(uri))
+        {
+            return new ApiEndpoint(ResolveHuggingFacePredictUri(uri), true);
+        }
+
+        if (uri.AbsolutePath.TrimEnd('/').EndsWith("/api/gomoku/move", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ApiEndpoint(uri, false);
+        }
+
+        return new ApiEndpoint(new Uri($"{normalized}/api/gomoku/move"), false);
+    }
+
+    private static bool IsHuggingFaceUri(Uri uri)
+    {
+        return uri.Host.EndsWith(".hf.space", StringComparison.OrdinalIgnoreCase) ||
+            uri.AbsolutePath.Contains("/gomoku/predict", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static Uri ResolveHuggingFacePredictUri(Uri uri)
+    {
+        if (uri.AbsolutePath.TrimEnd('/').EndsWith("/gomoku/predict", StringComparison.OrdinalIgnoreCase))
+        {
+            return uri;
+        }
+
+        return new Uri($"{uri.Scheme}://{uri.Authority}/gomoku/predict");
+    }
+
+    private static Uri ResolveHealthUri(Uri predictUri)
+    {
+        return new Uri($"{predictUri.Scheme}://{predictUri.Authority}/");
+    }
+
+    private static string FlattenBoard(int[][] board)
+    {
+        return string.Join(",", board.SelectMany(row => row));
+    }
+
+    private readonly record struct ApiEndpoint(Uri Uri, bool IsHuggingFace);
+
+    private sealed record VercelMoveRequest(
         [property: JsonPropertyName("board")] int[][] Board,
         [property: JsonPropertyName("player")] int Player,
         [property: JsonPropertyName("step")] int Step,
         [property: JsonPropertyName("model")] string Model);
 
-    private sealed record ApiEnvelope(
+    private sealed record HuggingFaceMoveRequest(
+        [property: JsonPropertyName("board")] string Board,
+        [property: JsonPropertyName("player")] int Player,
+        [property: JsonPropertyName("step")] int Step,
+        [property: JsonPropertyName("model")] string Model);
+
+    private sealed record VercelApiEnvelope(
         [property: JsonPropertyName("success")] bool Success,
         [property: JsonPropertyName("data")] MoveData? Data,
         [property: JsonPropertyName("message")] string? Message);
+
+    private sealed record HuggingFaceApiEnvelope(
+        [property: JsonPropertyName("model")] string? Model,
+        [property: JsonPropertyName("prediction")] MoveData? Prediction);
 
     private sealed record MoveData(
         [property: JsonPropertyName("row")] int Row,
