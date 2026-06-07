@@ -29,7 +29,7 @@ public sealed class MoveLogEntry
     {
         get
         {
-            var confidenceText = Confidence is null ? string.Empty : $" · {Confidence:P0}";
+            var confidenceText = Confidence is null ? string.Empty : $" / {Confidence:P0}";
             return $"{Step:00}. {PlayerName} {StoneName} {Point.Coordinate}{confidenceText}";
         }
     }

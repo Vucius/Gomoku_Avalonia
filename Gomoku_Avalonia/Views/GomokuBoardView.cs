@@ -144,11 +144,11 @@ public sealed class GomokuBoardView : Control
     {
         if (Skin == BoardSkin.Cyberpunk)
         {
-            context.DrawRectangle(Brush("#090f1d"), null, Bounds);
+            context.DrawRectangle(Brush("#090f1d"), null, metrics.BoardRect, 10, 10);
             for (var i = 0; i < 42; i++)
             {
-                var x = (i * 67 % Math.Max(1, (int)Bounds.Width));
-                var y = (i * 43 % Math.Max(1, (int)Bounds.Height));
+                var x = metrics.BoardRect.X + (i * 67 % Math.Max(1, (int)metrics.BoardRect.Width));
+                var y = metrics.BoardRect.Y + (i * 43 % Math.Max(1, (int)metrics.BoardRect.Height));
                 context.DrawEllipse(Brush("#554ae6ff"), null, new Point(x, y), 1.2, 1.2);
             }
 
@@ -156,15 +156,17 @@ public sealed class GomokuBoardView : Control
             return;
         }
 
-        context.DrawRectangle(Brush("#f0c06a"), null, Bounds);
-        context.DrawRectangle(Brush("#d99c45"), new Pen(Brush("#78502b"), 2), metrics.BoardRect, 8, 8);
+        var shadowRect = metrics.BoardRect.Translate(new Vector(0, 3));
+        context.DrawRectangle(Brush("#240f1720"), null, shadowRect, 12, 12);
+        context.DrawRectangle(Brush("#e5bc78"), new Pen(Brush("#8a6b4828"), 1.2), metrics.BoardRect, 10, 10);
+        context.DrawRectangle(Brush("#22fff8ea"), null, metrics.BoardRect.Deflate(5), 7, 7);
 
-        for (var i = 0; i < 18; i++)
+        for (var i = 0; i < 22; i++)
         {
-            var y = metrics.BoardRect.Y + 12 + (metrics.BoardRect.Height - 24) * i / 17.0;
-            var start = new Point(metrics.BoardRect.X + 16, y);
-            var end = new Point(metrics.BoardRect.Right - 16, y + Math.Sin(i) * 5);
-            context.DrawLine(new Pen(Brush("#668f5b28"), 1), start, end);
+            var y = metrics.BoardRect.Y + 10 + (metrics.BoardRect.Height - 20) * i / 21.0;
+            var start = new Point(metrics.BoardRect.X + 12, y);
+            var end = new Point(metrics.BoardRect.Right - 12, y + Math.Sin(i * 0.8) * 3);
+            context.DrawLine(new Pen(Brush("#48613a19"), 0.8), start, end);
         }
     }
 
@@ -172,7 +174,7 @@ public sealed class GomokuBoardView : Control
     {
         var gridPen = Skin == BoardSkin.Cyberpunk
             ? new Pen(Brush("#4edfff"), 1.2)
-            : new Pen(Brush("#5d341a"), 1);
+            : new Pen(Brush("#aa4a2f19"), 0.95);
 
         for (var i = 0; i < GomokuEngine.BoardSize; i++)
         {
@@ -182,7 +184,7 @@ public sealed class GomokuBoardView : Control
             context.DrawLine(gridPen, new Point(metrics.Origin.X, y), new Point(metrics.GridEnd.X, y));
         }
 
-        var starBrush = Skin == BoardSkin.Cyberpunk ? Brush("#e9faff") : Brush("#3e210e");
+        var starBrush = Skin == BoardSkin.Cyberpunk ? Brush("#e9faff") : Brush("#9a3c2413");
         foreach (var row in new[] { 3, 7, 11 })
         {
             foreach (var col in new[] { 3, 7, 11 })
@@ -201,14 +203,14 @@ public sealed class GomokuBoardView : Control
         {
             var center = metrics.CellCenter(hint.Row, hint.Col);
             var radius = metrics.Gap * (0.46 + 0.12 * pulse);
-            context.DrawEllipse(null, new Pen(Brush("#2f8cff"), 3), center, radius, radius);
+            context.DrawEllipse(null, new Pen(Brush("#3975a85e"), 2.4), center, radius, radius);
         }
 
         if (LastMove is { } lastMove)
         {
             var center = metrics.CellCenter(lastMove.Row, lastMove.Col);
             var radius = metrics.Gap * (0.24 + 0.08 * pulse);
-            var brush = Skin == BoardSkin.Cyberpunk ? Brush("#cc4cff8b") : Brush("#cce43f2e");
+            var brush = Skin == BoardSkin.Cyberpunk ? Brush("#cc4cff8b") : Brush("#b0663d24");
             context.DrawEllipse(brush, null, center, radius, radius);
         }
     }
@@ -254,12 +256,12 @@ public sealed class GomokuBoardView : Control
 
         if (player == 1)
         {
-            context.DrawEllipse(Brush("#141414"), new Pen(Brush(isWinning ? "#e43f2e" : "#000000"), isWinning ? 3 : 1), center, radius, radius);
+            context.DrawEllipse(Brush("#151515"), new Pen(Brush(isWinning ? "#c53c2f" : "#111111"), isWinning ? 2.6 : 0.9), center, radius, radius);
             context.DrawEllipse(Brush("#33ffffff"), null, new Point(center.X - radius * 0.28, center.Y - radius * 0.35), radius * 0.16, radius * 0.16);
             return;
         }
 
-        context.DrawEllipse(Brush("#f8f2df"), new Pen(Brush(isWinning ? "#e43f2e" : "#8d8066"), isWinning ? 3 : 1), center, radius, radius);
+        context.DrawEllipse(Brush("#fbf7ec"), new Pen(Brush(isWinning ? "#c53c2f" : "#9c8f76"), isWinning ? 2.6 : 0.9), center, radius, radius);
         context.DrawEllipse(Brush("#aaffffff"), null, new Point(center.X - radius * 0.24, center.Y - radius * 0.32), radius * 0.18, radius * 0.18);
     }
 
@@ -295,9 +297,9 @@ public sealed class GomokuBoardView : Control
             return null;
         }
 
-        var side = Math.Min(Bounds.Width, Bounds.Height) - 20;
+        var side = Math.Max(72, Math.Min(Bounds.Width, Bounds.Height) - 8);
         var boardRect = new Rect((Bounds.Width - side) / 2, (Bounds.Height - side) / 2, side, side);
-        var inset = side * 0.075;
+        var inset = side * 0.052;
         var gap = (side - inset * 2) / (GomokuEngine.BoardSize - 1);
         var origin = new Point(boardRect.X + inset, boardRect.Y + inset);
         var gridEnd = new Point(origin.X + gap * (GomokuEngine.BoardSize - 1), origin.Y + gap * (GomokuEngine.BoardSize - 1));

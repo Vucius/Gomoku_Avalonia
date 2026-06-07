@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -53,13 +52,13 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private string _selectedModel = "best_model";
 
     [ObservableProperty]
-    private string _statusText = "Choose a point to start.";
+    private string _statusText = "Ready";
 
     [ObservableProperty]
-    private string _hintText = "No hint yet.";
+    private string _hintText = "Hint: None";
 
     [ObservableProperty]
-    private string _networkStatusText = "Network: not checked";
+    private string _networkStatusText = "Ready";
 
     [ObservableProperty]
     private string _networkWaitText = string.Empty;
@@ -111,17 +110,17 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     public string SkinButtonText => BoardSkin == BoardSkin.Wood ? "Cyberpunk" : "Wood";
 
-    public string OpeningText => IsAiFirst ? "AI opens as black." : "You open as black.";
+    public string OpeningText => IsAiFirst ? "AI plays Black" : "You play Black";
 
     public string BusyText => IsBusy ? "AI is thinking..." : string.Empty;
 
-    public string ScoreText => $"You {PlayerWins} · AI {AiWins} · Draw {Draws}";
+    public string ScoreText => $"You {PlayerWins} / AI {AiWins} / Draw {Draws}";
 
-    public string CompactScoreText => $"You {PlayerWins} | AI {AiWins} | Draw {Draws}";
+    public string CompactScoreText => $"You {PlayerWins} / AI {AiWins} / Draw {Draws}";
 
     public string MoveLogText => MoveLog.Count == 0
-        ? "No moves yet."
-        : string.Join("   ", MoveLog.TakeLast(3).Select(entry => entry.Summary));
+        ? "Last move: None"
+        : $"Last move: {MoveLog[^1].Summary}";
 
     private int HumanPlayer => IsAiFirst ? -1 : 1;
 
@@ -183,7 +182,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         }
 
         HintMove = null;
-        HintText = "No hint yet.";
+        HintText = "Hint: None";
         if (!_engine.MakeMove(point.Row, point.Col, HumanPlayer))
         {
             return;
@@ -222,7 +221,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         IsGameOver = false;
         WinningCells = [];
         HintMove = null;
-        HintText = "No hint yet.";
+        HintText = "Hint: None";
         StatusText = "Move undone.";
         RefreshBoard();
     }
@@ -246,7 +245,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 }
 
                 HintMove = new BoardPoint(result.Row, result.Col);
-                HintText = $"Suggested {HintMove.Value.Coordinate} · confidence {result.Confidence:P0}";
+                HintText = $"Hint: {HintMove.Value.Coordinate} / {result.Confidence:P0}";
                 StatusText = "Hint ready.";
             },
             "Fetching AI hint...");
@@ -335,7 +334,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
                     IsNetworkWaitVisible = false;
                     NetworkWaitText = string.Empty;
-                    NetworkStatusText = $"Connected | {elapsed.ElapsedMilliseconds} ms";
+                    NetworkStatusText = $"Online / {elapsed.ElapsedMilliseconds} ms";
                     await onSuccess(result);
                     return;
                 }
@@ -463,7 +462,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         WinningCells = [];
         LastMove = null;
         HintMove = null;
-        HintText = "No hint yet.";
+        HintText = "Hint: None";
         StatusText = OpeningText;
         RefreshBoard();
     }
@@ -479,14 +478,14 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     {
         if (failedAttempts <= SilentNetworkAttempts)
         {
-            NetworkStatusText = $"Retrying network {failedAttempts}/{SilentNetworkAttempts}";
+            NetworkStatusText = $"Reconnecting {failedAttempts}/{SilentNetworkAttempts}";
             StatusText = "Checking network connection.";
             await Task.Delay(TimeSpan.FromMilliseconds(800), _shutdown.Token);
             return;
         }
 
         IsNetworkWaitVisible = true;
-        NetworkStatusText = "Waiting for network";
+        NetworkStatusText = "Offline";
         NetworkWaitText = $"{message} Retrying in 2 seconds.";
         StatusText = "Waiting for network connection.";
         await Task.Delay(TimeSpan.FromSeconds(2), _shutdown.Token);
@@ -512,7 +511,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             Draws = state.Draws;
             ApiBaseUrl = string.IsNullOrWhiteSpace(state.ApiBaseUrl) ? GomokuApiClient.DefaultBaseUrl : state.ApiBaseUrl;
             SelectedModel = string.IsNullOrWhiteSpace(state.SelectedModel) ? "best_model" : state.SelectedModel;
-            BoardSkin = state.BoardSkin;
+            BoardSkin = BoardSkin.Wood;
         }
         catch
         {
