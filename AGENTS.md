@@ -65,7 +65,7 @@ Gomoku_Avalonia/                          <-- Solution Root
 - **`GomokuApiClient.cs`**:
   - Uses `HttpClient` to communicate with the remote API. Android defaults to direct Hugging Face Space access (`https://mitsutake-model-space.hf.space/gomoku/predict`) and still supports the Vercel proxy (`https://vukservices.vercel.app/api/gomoku/move`) when that base URL is configured.
   - Timeout configured at 30 seconds.
-  - Handles network connection checks and raises events on loss of connectivity.
+  - Does not run a separate health check before inference; request failures are handled by the ViewModel retry flow.
 - **`SoundService.cs`**:
   - Generates sound synthesized waveforms dynamically to avoid packing audio assets.
   - **Android**: Uses `Android.Media.AudioTrack` to stream dynamically generated raw PCM data (e.g. Triangle/Sine waves) simulating timber clicks.
@@ -76,7 +76,7 @@ Gomoku_Avalonia/                          <-- Solution Root
   - Manages UI states: `IsBusy` (busy thinking overlay indicator), `Score` card (Player wins vs. AI wins), history logs.
   - Manages configuration settings: custom API Base URL.
   - Implements game flow: Skin switching (Wood vs. Cyberpunk), First-move selection, "AI Hint" querying, and undo step triggers.
-  - Listens to connection status checks. If internet is disconnected, pops a warnings UI overlay and triggers an automatic application exit timer.
+  - Retries failed AI requests twice with lightweight status text, then shows a network wait overlay and keeps retrying without exiting the app.
 - **`MainView.axaml`**:
   - Uses a custom canvas/layout for rendering the 15x15 board.
   - Employs smooth animations for dropping pieces (scale transitions) and last move indicator (continuous breathing pulse).

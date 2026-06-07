@@ -17,7 +17,7 @@ A modern, cross-platform Gomoku (五子棋) client game built with **Avalonia UI
   - **Cyberpunk**: Vibrant, glowing neon grid designed for a futuristic look.
   - Custom animations including scale transitions for placed stones and continuous breathing pulses on the last move.
 - **Dynamic Wave Sound Synthesis**: Audio effects are generated programmatically on the fly (generating Triangle/Sine wave PCM streams) rather than using heavy asset files, ensuring a lightweight package.
-- **Resilient Networking**: Automatically monitors network status. Displays reconnection overlays, retries API requests every 2 seconds during disruptions, and manages task cancellation cleanly.
+- **Resilient Networking**: Sends AI inference requests directly, retries transient failures twice before showing a reconnection overlay, then retries every 2 seconds without exiting the app.
 - **User Settings & Persistence**: Persists scores (wins/losses/draws), active skins, selected model, and custom API endpoints locally across sessions.
 
 ---

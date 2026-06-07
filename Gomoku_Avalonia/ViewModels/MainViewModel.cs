@@ -17,6 +17,8 @@ namespace Gomoku_Avalonia.ViewModels;
 
 public partial class MainViewModel : ViewModelBase, IDisposable
 {
+    private const int SilentNetworkAttempts = 2;
+
     private readonly GomokuEngine _engine = new();
     private readonly GomokuApiClient _apiClient;
     private readonly SoundService _soundService;
@@ -315,17 +317,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
         try
         {
+            var failedAttempts = 0;
+
             while (!_shutdown.IsCancellationRequested)
             {
                 try
                 {
-                    var connected = await _apiClient.CheckInternetConnectionAsync(ApiBaseUrl, _shutdown.Token);
-                    if (!connected)
-                    {
-                        await WaitForNetworkRetryAsync("Network unavailable. Waiting for connection...");
-                        continue;
-                    }
-
                     var elapsed = Stopwatch.StartNew();
                     var result = await _apiClient.FetchMoveAsync(
                         ApiBaseUrl,
@@ -344,11 +341,25 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 }
                 catch (HttpRequestException)
                 {
-                    await WaitForNetworkRetryAsync("Network request failed. Waiting for connection...");
+                    failedAttempts++;
+                    await WaitForNetworkRetryAsync(
+                        "Network request failed. Waiting for connection...",
+                        failedAttempts);
+                    if (failedAttempts > SilentNetworkAttempts)
+                    {
+                        failedAttempts = 0;
+                    }
                 }
                 catch (TaskCanceledException) when (!_shutdown.IsCancellationRequested)
                 {
-                    await WaitForNetworkRetryAsync("Network timeout. Waiting for connection...");
+                    failedAttempts++;
+                    await WaitForNetworkRetryAsync(
+                        "Network timeout. Waiting for connection...",
+                        failedAttempts);
+                    if (failedAttempts > SilentNetworkAttempts)
+                    {
+                        failedAttempts = 0;
+                    }
                 }
             }
         }
@@ -464,8 +475,16 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(Board));
     }
 
-    private async Task WaitForNetworkRetryAsync(string message)
+    private async Task WaitForNetworkRetryAsync(string message, int failedAttempts)
     {
+        if (failedAttempts <= SilentNetworkAttempts)
+        {
+            NetworkStatusText = $"Retrying network {failedAttempts}/{SilentNetworkAttempts}";
+            StatusText = "Checking network connection.";
+            await Task.Delay(TimeSpan.FromMilliseconds(800), _shutdown.Token);
+            return;
+        }
+
         IsNetworkWaitVisible = true;
         NetworkStatusText = "Waiting for network";
         NetworkWaitText = $"{message} Retrying in 2 seconds.";

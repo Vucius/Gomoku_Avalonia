@@ -104,25 +104,6 @@ public sealed class GomokuApiClient : IDisposable
             payload.Prediction.Confidence);
     }
 
-    public async Task<bool> CheckInternetConnectionAsync(string baseUrl, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeout.CancelAfter(TimeSpan.FromSeconds(5));
-
-            var endpoint = ResolveEndpoint(baseUrl);
-            var healthUri = endpoint.IsHuggingFace ? ResolveHealthUri(endpoint.Uri) : endpoint.Uri;
-            using var request = new HttpRequestMessage(HttpMethod.Get, healthUri);
-            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
-            return (int)response.StatusCode < 500;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
     public void Dispose()
     {
         _httpClient.Dispose();
@@ -170,11 +151,6 @@ public sealed class GomokuApiClient : IDisposable
         }
 
         return new Uri($"{uri.Scheme}://{uri.Authority}/gomoku/predict");
-    }
-
-    private static Uri ResolveHealthUri(Uri predictUri)
-    {
-        return new Uri($"{predictUri.Scheme}://{predictUri.Authority}/");
     }
 
     private static string FlattenBoard(int[][] board)
