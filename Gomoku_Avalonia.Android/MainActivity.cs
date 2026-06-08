@@ -6,7 +6,7 @@ using Avalonia.Android;
 namespace Gomoku_Avalonia.Android
 {
     [Activity(
-        Label = "Gomoku_Avalonia.Android",
+        Label = "Gomoku Avalonia",
         Theme = "@style/MyTheme.NoActionBar",
         Icon = "@drawable/icon",
         MainLauncher = true,

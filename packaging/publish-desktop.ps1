@@ -16,6 +16,7 @@ $artifactRoot = Join-Path $repoRoot "artifacts\desktop"
 $stagingRoot = Join-Path $artifactRoot "Gomoku-Avalonia-$Runtime"
 $appStageDir = Join-Path $stagingRoot "Gomoku-Avalonia"
 $zipPath = Join-Path $artifactRoot "Gomoku-Avalonia-$Runtime-$packageVersion-portable.zip"
+$exeAssetPath = Join-Path $artifactRoot "Gomoku-Avalonia-$Runtime-$packageVersion.exe"
 $checksumPath = Join-Path $artifactRoot "Gomoku-Avalonia-$Runtime-$packageVersion-portable.sha256.txt"
 
 function Assert-UnderRoot {
@@ -34,6 +35,7 @@ function Assert-UnderRoot {
 Assert-UnderRoot -Path $artifactRoot -Root $repoRoot
 Assert-UnderRoot -Path $stagingRoot -Root $repoRoot
 Assert-UnderRoot -Path $zipPath -Root $repoRoot
+Assert-UnderRoot -Path $exeAssetPath -Root $repoRoot
 
 New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
 
@@ -43,6 +45,10 @@ if (Test-Path -LiteralPath $stagingRoot) {
 
 if (Test-Path -LiteralPath $zipPath) {
     Remove-Item -LiteralPath $zipPath -Force
+}
+
+if (Test-Path -LiteralPath $exeAssetPath) {
+    Remove-Item -LiteralPath $exeAssetPath -Force
 }
 
 if (Test-Path -LiteralPath $checksumPath) {
@@ -84,6 +90,13 @@ New-Item -ItemType Directory -Force -Path $appStageDir | Out-Null
 Copy-Item -Path (Join-Path $publishDir "*") -Destination $appStageDir -Recurse -Force
 Get-ChildItem -LiteralPath $appStageDir -Recurse -Filter "*.pdb" | Remove-Item -Force
 
+$stagedExePath = Join-Path $appStageDir "GomokuAvalonia.exe"
+if (-not (Test-Path -LiteralPath $stagedExePath)) {
+    throw "Desktop executable was not created: $stagedExePath"
+}
+
+Copy-Item -LiteralPath $stagedExePath -Destination $exeAssetPath -Force
+
 $readmePath = Join-Path $appStageDir "README.txt"
 @"
 Gomoku Avalonia Desktop
@@ -100,7 +113,12 @@ https://mitsutake-model-space.hf.space
 Compress-Archive -Path (Join-Path $stagingRoot "*") -DestinationPath $zipPath -Force
 
 $hash = Get-FileHash -Path $zipPath -Algorithm SHA256
-"$($hash.Hash)  $(Split-Path -Leaf $zipPath)" | Set-Content -Path $checksumPath -Encoding ASCII
+$exeHash = Get-FileHash -Path $exeAssetPath -Algorithm SHA256
+@(
+    "$($hash.Hash)  $(Split-Path -Leaf $zipPath)",
+    "$($exeHash.Hash)  $(Split-Path -Leaf $exeAssetPath)"
+) | Set-Content -Path $checksumPath -Encoding ASCII
 
 Write-Host "Desktop package: $zipPath"
+Write-Host "Desktop executable: $exeAssetPath"
 Write-Host "SHA256: $($hash.Hash)"

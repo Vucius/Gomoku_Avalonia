@@ -70,6 +70,7 @@ jobs:
         with:
           name: Gomoku-Avalonia-Windows-Desktop
           path: |
+            artifacts/desktop/*.exe
             artifacts/desktop/*.zip
             artifacts/desktop/*.sha256.txt
           if-no-files-found: error
@@ -95,6 +96,7 @@ jobs:
         with:
           files: |
             release-assets/*.apk
+            release-assets/*.exe
             release-assets/*.zip
             release-assets/*.sha256.txt
           draft: false

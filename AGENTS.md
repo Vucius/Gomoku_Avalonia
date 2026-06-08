@@ -89,7 +89,8 @@ The tag workflow is `.github/workflows/release-apps.yml`.
 It builds:
 
 - `Gomoku_Avalonia.Android` on Ubuntu and uploads the APK.
-- `Gomoku_Avalonia.Desktop` on Windows and uploads the portable zip plus SHA256.
+- `Gomoku_Avalonia.Desktop` on Windows and uploads the executable, portable zip,
+  and SHA256 file.
 - A GitHub Release containing all artifacts.
 
 ## Development Rules

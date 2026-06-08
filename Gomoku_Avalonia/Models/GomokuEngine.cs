@@ -73,13 +73,13 @@ public sealed class GomokuEngine
     {
         if (!IsInside(row, col))
         {
-            return [];
+            return Array.Empty<BoardPoint>();
         }
 
         var player = Board[row, col];
         if (player == 0)
         {
-            return [];
+            return Array.Empty<BoardPoint>();
         }
 
         var directions = new (int dRow, int dCol)[]
@@ -106,7 +106,7 @@ public sealed class GomokuEngine
             }
         }
 
-        return [];
+        return Array.Empty<BoardPoint>();
     }
 
     private static bool IsInside(int row, int col)

@@ -76,11 +76,13 @@ access, add `-NoRestore`.
 Desktop package output:
 
 ```text
+artifacts/desktop/Gomoku-Avalonia-win-x64-1.0.0.exe
 artifacts/desktop/Gomoku-Avalonia-win-x64-1.0.0-portable.zip
 artifacts/desktop/Gomoku-Avalonia-win-x64-1.0.0-portable.sha256.txt
 ```
 
-The desktop package is self-contained and does not require users to install a
+The `.exe` is the self-contained desktop app. The portable `.zip` contains the
+same executable plus a short README. Neither requires users to install a
 separate .NET runtime.
 
 ## GitHub Release
@@ -95,8 +97,9 @@ git push origin v1.0.0
 The workflow builds and uploads:
 
 - Android APK
+- Windows x64 desktop executable
 - Windows x64 portable desktop zip
-- SHA256 checksum for the desktop zip
+- SHA256 checksums for the desktop executable and zip
 
 ## Development Notes
 
