@@ -63,13 +63,15 @@ Build desktop release:
 dotnet build Gomoku_Avalonia.Desktop/Gomoku_Avalonia.Desktop.csproj -c Release
 ```
 
-Package Windows desktop release:
+Package Windows desktop installers:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File packaging\publish-desktop.ps1 -Runtime win-x64 -Version 1.0.0
+powershell -ExecutionPolicy Bypass -File packaging\publish-desktop.ps1 -Runtime win-x86 -Version 1.0.0
 ```
 
-Use `-NoRestore` only after packages have already been restored locally.
+Inno Setup (`ISCC.exe`) is required. Use `-NoRestore` only after packages have
+already been restored locally.
 
 Build Android APK:
 
@@ -89,8 +91,8 @@ The tag workflow is `.github/workflows/release-apps.yml`.
 It builds:
 
 - `Gomoku_Avalonia.Android` on Ubuntu and uploads the APK.
-- `Gomoku_Avalonia.Desktop` on Windows and uploads the executable, portable zip,
-  and SHA256 file.
+- `Gomoku_Avalonia.Desktop` on Windows and uploads x64 and x86 installer exe
+  files.
 - A GitHub Release containing all artifacts.
 
 ## Development Rules

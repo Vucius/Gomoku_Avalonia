@@ -62,28 +62,28 @@ APK output:
 Gomoku_Avalonia.Android/bin/Release/net10.0-android/android-arm64/publish/
 ```
 
-## Build Windows Desktop Package
+## Build Windows Desktop Installers
 
-Use the release script to create a self-contained portable zip:
+Install Inno Setup first, then use the release script to create a self-contained
+Windows installer:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File packaging\publish-desktop.ps1 -Runtime win-x64 -Version 1.0.0
+powershell -ExecutionPolicy Bypass -File packaging\publish-desktop.ps1 -Runtime win-x86 -Version 1.0.0
 ```
 
 If NuGet packages are already restored and the local shell has no network
 access, add `-NoRestore`.
 
-Desktop package output:
+Desktop installer output:
 
 ```text
-artifacts/desktop/Gomoku-Avalonia-win-x64-1.0.0.exe
-artifacts/desktop/Gomoku-Avalonia-win-x64-1.0.0-portable.zip
-artifacts/desktop/Gomoku-Avalonia-win-x64-1.0.0-portable.sha256.txt
+artifacts/desktop/Gomoku-Avalonia-win-x64-1.0.0-setup.exe
+artifacts/desktop/Gomoku-Avalonia-win-x86-1.0.0-setup.exe
 ```
 
-The `.exe` is the self-contained desktop app. The portable `.zip` contains the
-same executable plus a short README. Neither requires users to install a
-separate .NET runtime.
+The installers are self-contained and do not require users to install a separate
+.NET runtime.
 
 ## GitHub Release
 
@@ -97,9 +97,8 @@ git push origin v1.0.0
 The workflow builds and uploads:
 
 - Android APK
-- Windows x64 desktop executable
-- Windows x64 portable desktop zip
-- SHA256 checksums for the desktop executable and zip
+- Windows x64 desktop installer
+- Windows x86 desktop installer
 
 ## Development Notes
 
