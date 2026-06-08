@@ -6,7 +6,11 @@
         xmlns:views="using:Gomoku_Avalonia.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Gomoku_Avalonia.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="Gomoku_Avalonia">
+        Width="1100"
+        Height="760"
+        MinWidth="900"
+        MinHeight="620"
+        Icon="/Assets/Icon.png"
+        Title="Gomoku Avalonia">
         <views:MainView />
 </Window>
