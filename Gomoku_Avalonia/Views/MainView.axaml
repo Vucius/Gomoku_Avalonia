@@ -15,279 +15,455 @@
 
     <UserControl.Styles>
         <Style Selector="Button">
-            <Setter Property="MinHeight" Value="42" />
+            <Setter Property="MinHeight" Value="44" />
             <Setter Property="Padding" Value="14,8" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Background" Value="#fffaf2" />
-            <Setter Property="Foreground" Value="#28313a" />
-            <Setter Property="BorderBrush" Value="#d6cabc" />
+            <Setter Property="Background" Value="#FFFDF8" />
+            <Setter Property="Foreground" Value="#1F2933" />
+            <Setter Property="BorderBrush" Value="#E5DED2" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Background" Value="#F8F5EF" />
+        </Style>
         <Style Selector="Button.primary">
-            <Setter Property="Background" Value="#28313a" />
-            <Setter Property="Foreground" Value="#fffaf2" />
-            <Setter Property="BorderBrush" Value="#28313a" />
+            <Setter Property="Background" Value="#1F2933" />
+            <Setter Property="Foreground" Value="#FFFDF8" />
+            <Setter Property="BorderBrush" Value="#1F2933" />
+        </Style>
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#111827" />
+        </Style>
+        <Style Selector="Button.icon">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="MinWidth" Value="44" />
+            <Setter Property="Foreground" Value="#6B7280" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style Selector="Button.icon:pointerover">
+            <Setter Property="Foreground" Value="#1F2933" />
+            <Setter Property="Background" Value="#E5DED2" />
+        </Style>
+        <Style Selector="Button.icon:pressed">
+            <Setter Property="Background" Value="#DCD3C4" />
+            <Setter Property="Foreground" Value="#111827" />
         </Style>
         <Style Selector="TextBox">
             <Setter Property="MinHeight" Value="40" />
             <Setter Property="Padding" Value="11,8" />
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Background" Value="#fffaf2" />
-            <Setter Property="Foreground" Value="#28313a" />
-            <Setter Property="BorderBrush" Value="#d6cabc" />
+            <Setter Property="Background" Value="#FFFDF8" />
+            <Setter Property="Foreground" Value="#1F2933" />
+            <Setter Property="BorderBrush" Value="#E5DED2" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
         <Style Selector="ComboBox">
             <Setter Property="MinHeight" Value="40" />
             <Setter Property="Padding" Value="10,6" />
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Background" Value="#fffaf2" />
-            <Setter Property="Foreground" Value="#28313a" />
-            <Setter Property="BorderBrush" Value="#d6cabc" />
+            <Setter Property="Background" Value="#FFFDF8" />
+            <Setter Property="Foreground" Value="#1F2933" />
+            <Setter Property="BorderBrush" Value="#E5DED2" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
         <Style Selector="ToggleSwitch">
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="#52606b" />
+            <Setter Property="Foreground" Value="#1F2933" />
         </Style>
     </UserControl.Styles>
 
-    <Grid Background="#f3efe7" RowDefinitions="Auto,*,Auto">
-        <Border Grid.Row="0"
-                Background="#f8f5ee"
-                BorderBrush="#e4d9cb"
-                BorderThickness="0,0,0,1"
-                Padding="18,14,18,12">
-            <Grid ColumnDefinitions="*,Auto"
-                  RowDefinitions="Auto,Auto"
-                  ColumnSpacing="12">
-                <TextBlock Text="Gomoku"
-                           FontSize="22"
-                           FontWeight="SemiBold"
-                           Foreground="#20262d" />
-                <TextBlock Grid.Row="1"
-                           Text="{Binding OpeningText}"
-                           FontSize="14"
-                           Foreground="#66717c"
-                           Margin="0,3,0,0" />
+    <Grid Background="#FAF8F3" Name="RootGrid">
+        <Grid Name="ContentWrapper" Margin="0">
+            <!-- PORTRAIT LAYOUT -->
+            <Grid Name="PortraitLayout" RowDefinitions="Auto,Auto,Auto,*" Margin="0">
+                <!-- Header -->
+                <Border Name="PortraitHeader" Grid.Row="0"
+                        Background="#FFFDF8"
+                        BorderBrush="#E5DED2"
+                        BorderThickness="0,0,0,1"
+                        Padding="18,14,18,12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel>
+                            <TextBlock Text="Gomoku"
+                                       FontSize="22"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1F2933" />
+                            <TextBlock Text="{Binding OpeningText}"
+                                       FontSize="14"
+                                       Foreground="#6B7280"
+                                       Margin="0,3,0,0" />
+                        </StackPanel>
 
-                <Border Grid.Column="1"
-                        Grid.RowSpan="2"
-                        Background="#fffaf2"
-                        BorderBrush="#e0d4c5"
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding NetworkStatusText}"
+                                       FontSize="11"
+                                       Foreground="#9CA3AF"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Ellipse Width="8" Height="8" Fill="{Binding StatusColor}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding StatusText}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="#4B5563"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Classes="icon"
+                                    Command="{Binding OpenSettingsCommand}"
+                                    Content="⚙"
+                                    FontSize="20"
+                                    VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Board Area -->
+                <Grid Grid.Row="1" Margin="14,24,14,24" HorizontalAlignment="Center" VerticalAlignment="Top">
+                    <views:GomokuBoardView Name="PortraitBoard" 
+                                           Board="{Binding Board}"
+                                           MoveVersion="{Binding MoveVersion}"
+                                           LastMove="{Binding LastMove}"
+                                           HintMove="{Binding HintMove}"
+                                           WinningCells="{Binding WinningCells}"
+                                           Skin="{Binding BoardSkin}"
+                                           CellSelectedCommand="{Binding PlaceHumanMoveCommand}" />
+
+                    <Border IsVisible="{Binding IsNetworkWaitVisible}"
+                            Background="#f7FFFDF8"
+                            BorderBrush="#b88146"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="12"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Margin="8">
+                        <TextBlock Text="{Binding NetworkWaitText}"
+                                   Foreground="#4a3320"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="340" />
+                    </Border>
+                </Grid>
+
+                <!-- Bottom Controls -->
+                <Border Name="PortraitControlCard" Grid.Row="2"
+                        Margin="14,0,14,24"
+                        Background="#FFFDF8"
+                        BorderBrush="#E5DED2"
                         BorderThickness="1"
                         CornerRadius="8"
-                        Padding="12,8"
-                        VerticalAlignment="Center">
-                    <StackPanel Spacing="3">
-                        <TextBlock Text="{Binding CompactScoreText}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="#28313a"
-                                   HorizontalAlignment="Right" />
-                        <TextBlock Text="{Binding NetworkStatusText}"
-                                   FontSize="12"
-                                   Foreground="#4f7f63"
-                                   HorizontalAlignment="Right" />
-                    </StackPanel>
+                        Padding="14"
+                        VerticalAlignment="Top">
+                    <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Border Background="#F2ECE1" CornerRadius="7" Padding="10,7">
+                                <StackPanel>
+                                    <TextBlock Text="You" FontSize="12" Foreground="#6B7280" />
+                                    <TextBlock Text="{Binding PlayerWins}" FontSize="18" FontWeight="SemiBold" Foreground="#1F2933" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Background="#F2ECE1" CornerRadius="7" Padding="10,7">
+                                <StackPanel>
+                                    <TextBlock Text="AI" FontSize="12" Foreground="#6B7280" />
+                                    <TextBlock Text="{Binding AiWins}" FontSize="18" FontWeight="SemiBold" Foreground="#1F2933" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Background="#F2ECE1" CornerRadius="7" Padding="10,7">
+                                <StackPanel>
+                                    <TextBlock Text="Draw" FontSize="12" Foreground="#6B7280" />
+                                    <TextBlock Text="{Binding Draws}" FontSize="18" FontWeight="SemiBold" Foreground="#1F2933" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Button Classes="primary" Content="New Game" Command="{Binding NewGameCommand}" HorizontalAlignment="Stretch" />
+                            <Button Grid.Column="1" Content="Undo" Command="{Binding UndoCommand}" HorizontalAlignment="Stretch" />
+                            <Button Grid.Column="2" Content="Hint" Command="{Binding RequestHintCommand}" HorizontalAlignment="Stretch" />
+                        </Grid>
+
+                        <Grid Grid.Row="2" ColumnDefinitions="*,*">
+                            <TextBlock Text="{Binding MoveLogText}" Foreground="#6B7280" FontSize="13" />
+                            <TextBlock Grid.Column="1" Text="{Binding HintText}" Foreground="#6B7280" FontSize="13" HorizontalAlignment="Right" />
+                        </Grid>
+                    </Grid>
                 </Border>
             </Grid>
-        </Border>
 
-        <Grid Grid.Row="1" Margin="14,8,14,10">
-            <views:GomokuBoardView Board="{Binding Board}"
-                                   MoveVersion="{Binding MoveVersion}"
-                                   LastMove="{Binding LastMove}"
-                                   HintMove="{Binding HintMove}"
-                                   WinningCells="{Binding WinningCells}"
-                                   Skin="{Binding BoardSkin}"
-                                   CellSelectedCommand="{Binding PlaceHumanMoveCommand}"
-                                   HorizontalAlignment="Stretch"
-                                   VerticalAlignment="Stretch" />
+            <!-- LANDSCAPE LAYOUT -->
+            <Grid Name="LandscapeLayout" RowDefinitions="Auto,*" Margin="0" IsVisible="False">
+                <!-- Header -->
+                <Border Name="LandscapeHeader" Grid.Row="0"
+                        Background="#FFFDF8"
+                        BorderBrush="#E5DED2"
+                        BorderThickness="0,0,0,1"
+                        Padding="24,12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="Gomoku"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1F2933"
+                                   VerticalAlignment="Center" />
 
-            <Border IsVisible="{Binding IsNetworkWaitVisible}"
-                    Background="#f7fffaf2"
-                    BorderBrush="#b88146"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="12"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    Margin="8">
-                <TextBlock Text="{Binding NetworkWaitText}"
-                           Foreground="#4a3320"
-                           FontSize="13"
-                           TextWrapping="Wrap"
-                           MaxWidth="340" />
-            </Border>
-        </Grid>
-
-        <Border Grid.Row="2"
-                Margin="14,0,14,14"
-                Background="#fbf8f1"
-                BorderBrush="#ded2c3"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="14">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                  RowSpacing="12">
-                <Grid ColumnDefinitions="*,*,*"
-                      ColumnSpacing="8">
-                    <Border Background="#f2ece1"
-                            CornerRadius="7"
-                            Padding="10,7">
-                        <StackPanel>
-                            <TextBlock Text="You"
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding NetworkStatusText}"
                                        FontSize="12"
-                                       Foreground="#6c7680" />
-                            <TextBlock Text="{Binding PlayerWins}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="#20262d" />
+                                       Foreground="#9CA3AF"
+                                       VerticalAlignment="Center" />
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Ellipse Width="8" Height="8" Fill="{Binding StatusColor}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding StatusText}"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="#4B5563"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Classes="icon"
+                                    Command="{Binding OpenSettingsCommand}"
+                                    Content="⚙"
+                                    FontSize="20"
+                                    VerticalAlignment="Center" />
                         </StackPanel>
-                    </Border>
-                    <Border Grid.Column="1"
-                            Background="#f2ece1"
-                            CornerRadius="7"
-                            Padding="10,7">
-                        <StackPanel>
-                            <TextBlock Text="AI"
-                                       FontSize="12"
-                                       Foreground="#6c7680" />
-                            <TextBlock Text="{Binding AiWins}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="#20262d" />
-                        </StackPanel>
-                    </Border>
-                    <Border Grid.Column="2"
-                            Background="#f2ece1"
-                            CornerRadius="7"
-                            Padding="10,7">
-                        <StackPanel>
-                            <TextBlock Text="Draw"
-                                       FontSize="12"
-                                       Foreground="#6c7680" />
-                            <TextBlock Text="{Binding Draws}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="#20262d" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-
-                <Grid Grid.Row="1"
-                      ColumnDefinitions="*,*,*"
-                      ColumnSpacing="8">
-                    <Button Classes="primary"
-                            Content="New Game"
-                            Command="{Binding NewGameCommand}" />
-                    <Button Grid.Column="1"
-                            Content="Undo"
-                            Command="{Binding UndoCommand}" />
-                    <Button Grid.Column="2"
-                            Content="Hint"
-                            Command="{Binding RequestHintCommand}" />
-                </Grid>
-
-                <Grid Grid.Row="2"
-                      ColumnDefinitions="*,Auto"
-                      ColumnSpacing="12"
-                      VerticalAlignment="Center">
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="Model"
-                                   FontSize="12"
-                                   Foreground="#6c7680" />
-                        <ComboBox ItemsSource="{Binding ModelOptions}"
-                                  SelectedItem="{Binding SelectedModel}"
-                                  HorizontalAlignment="Stretch" />
-                    </StackPanel>
-                    <ToggleSwitch Grid.Column="1"
-                                  IsChecked="{Binding IsAiFirst}"
-                                  Content="AI first"
-                                  VerticalAlignment="Bottom" />
-                </Grid>
-
-                <Grid Grid.Row="3"
-                      RowDefinitions="Auto,Auto"
-                      RowSpacing="5">
-                    <TextBlock Text="Server"
-                               FontSize="12"
-                               Foreground="#6c7680" />
-                    <Grid Grid.Row="1"
-                          ColumnDefinitions="*,78"
-                          ColumnSpacing="8">
-                        <TextBox Text="{Binding ApiBaseUrl}"
-                                 FontSize="12"
-                                 PlaceholderText="https://mitsutake-model-space.hf.space" />
-                        <Button Grid.Column="1"
-                                Content="Save"
-                                Command="{Binding ApplySettingsCommand}" />
                     </Grid>
-                </Grid>
+                </Border>
 
-                <Grid Grid.Row="4"
-                      ColumnDefinitions="*,*,*"
-                      ColumnSpacing="10">
-                    <TextBlock Text="{Binding StatusText}"
-                               Foreground="#52606b"
-                               FontSize="12"
-                               TextWrapping="Wrap" />
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding HintText}"
-                               Foreground="#52606b"
-                               FontSize="12"
-                               TextWrapping="Wrap" />
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding MoveLogText}"
-                               Foreground="#52606b"
-                               FontSize="12"
-                               TextWrapping="Wrap"
-                               TextAlignment="Right" />
+                <!-- Main Split Area -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,360" Margin="16">
+                    <!-- Board Area -->
+                    <Grid Grid.Column="0" Margin="0,0,16,0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <views:GomokuBoardView Name="LandscapeBoard" 
+                                               Board="{Binding Board}"
+                                               MoveVersion="{Binding MoveVersion}"
+                                               LastMove="{Binding LastMove}"
+                                               HintMove="{Binding HintMove}"
+                                               WinningCells="{Binding WinningCells}"
+                                               Skin="{Binding BoardSkin}"
+                                               CellSelectedCommand="{Binding PlaceHumanMoveCommand}" />
+
+                        <Border IsVisible="{Binding IsNetworkWaitVisible}"
+                                Background="#f7FFFDF8"
+                                BorderBrush="#b88146"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="12"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Margin="8">
+                            <TextBlock Text="{Binding NetworkWaitText}"
+                                       Foreground="#4a3320"
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="340" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Side Panel Controls -->
+                    <Border Name="LandscapeSidePanel" Grid.Column="1"
+                            Background="#FFFDF8"
+                            BorderBrush="#E5DED2"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="16">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="16" Margin="0,0,6,0">
+                                <!-- Score Section -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Score" FontSize="12" Foreground="#6B7280" />
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
+                                        <Border Background="#F2ECE1" CornerRadius="6" Padding="8,6">
+                                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                                <TextBlock Text="You" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding PlayerWins}" FontSize="14" FontWeight="SemiBold" Foreground="#1F2933" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Grid.Column="1" Background="#F2ECE1" CornerRadius="6" Padding="8,6">
+                                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                                <TextBlock Text="AI" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding AiWins}" FontSize="14" FontWeight="SemiBold" Foreground="#1F2933" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Grid.Column="2" Background="#F2ECE1" CornerRadius="6" Padding="8,6">
+                                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                                <TextBlock Text="Draw" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Draws}" FontSize="14" FontWeight="SemiBold" Foreground="#1F2933" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Actions Section -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Actions" FontSize="12" Foreground="#6B7280" />
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
+                                        <Button Classes="primary" Content="New Game" Command="{Binding NewGameCommand}" HorizontalAlignment="Stretch" />
+                                        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
+                                            <Button Content="Undo" Command="{Binding UndoCommand}" HorizontalAlignment="Stretch" />
+                                            <Button Grid.Column="1" Content="Hint" Command="{Binding RequestHintCommand}" HorizontalAlignment="Stretch" />
+                                        </Grid>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Status Section -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Status" FontSize="12" Foreground="#6B7280" />
+                                    <Border Background="#FAF8F3"
+                                            BorderBrush="#E5DED2"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{Binding OpeningText}"
+                                                       Foreground="#1F2933"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding MoveLogText}"
+                                                       Foreground="#6B7280"
+                                                       FontSize="13" />
+                                            <TextBlock Text="{Binding HintText}"
+                                                       Foreground="#6B7280"
+                                                       FontSize="13" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
                 </Grid>
             </Grid>
-        </Border>
+        </Grid>
 
+        <!-- SETTINGS MODAL OVERLAY -->
         <Border IsVisible="{Binding IsSettingsOpen}"
-                Background="#aa20262d"
-                Grid.RowSpan="3">
-            <Border Width="380"
-                    MaxWidth="380"
-                    Background="#fbf8f1"
-                    BorderBrush="#ded2c3"
+                Background="#aa111827"
+                ZIndex="100">
+            <Panel>
+                <!-- PORTRAIT SETTINGS CARD -->
+                <Border Name="PortraitSettingsCard"
+                    Width="340"
+                    Background="#FFFDF8"
+                    BorderBrush="#E5DED2"
                     BorderThickness="1"
                     CornerRadius="8"
-                    Padding="16"
+                    Padding="20"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Settings"
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16" MaxHeight="500">
+                    <TextBlock Grid.Row="0"
+                               Text="Settings"
                                FontSize="20"
                                FontWeight="SemiBold"
-                               Foreground="#20262d" />
-                    <TextBlock Text="API Base URL"
-                               Foreground="#6c7680" />
-                    <TextBox Text="{Binding ApiBaseUrl}"
-                             PlaceholderText="https://mitsutake-model-space.hf.space or Vercel proxy" />
-                    <TextBlock Text="Model"
-                               Foreground="#6c7680" />
-                    <ComboBox ItemsSource="{Binding ModelOptions}"
-                              SelectedItem="{Binding SelectedModel}"
-                              HorizontalAlignment="Stretch" />
-                    <Grid ColumnDefinitions="*,*"
-                          ColumnSpacing="8">
-                        <Button Content="Cancel"
-                                Command="{Binding CloseSettingsCommand}" />
-                        <Button Grid.Column="1"
-                                Classes="primary"
-                                Content="Apply"
-                                Command="{Binding ApplySettingsCommand}" />
+                               Foreground="#1F2933" />
+                    
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="16" Margin="0,0,8,0">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Server URL" FontSize="12" Foreground="#6B7280" />
+                                <TextBox Text="{Binding ApiBaseUrl}" PlaceholderText="https://mitsutake-model-space.hf.space" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="AI Model" FontSize="12" Foreground="#6B7280" />
+                                <ComboBox ItemsSource="{Binding ModelOptions}" SelectedItem="{Binding SelectedModel}" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="AI moves first" FontSize="12" Foreground="#6B7280" />
+                                <ToggleSwitch IsChecked="{Binding IsAiFirst}" Content="" OnContent="On" OffContent="Off" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Board Skin" FontSize="12" Foreground="#6B7280" />
+                                <Button Content="{Binding SkinButtonText}" Command="{Binding ToggleSkinCommand}" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,8,0,0">
+                        <Button Content="Cancel" Command="{Binding CloseSettingsCommand}" HorizontalAlignment="Stretch" />
+                        <Button Grid.Column="1" Classes="primary" Content="Apply" Command="{Binding ApplySettingsCommand}" HorizontalAlignment="Stretch" />
                     </Grid>
-                </StackPanel>
+                </Grid>
             </Border>
+
+            <!-- LANDSCAPE SETTINGS CARD -->
+            <Border Name="LandscapeSettingsCard"
+                    Width="560"
+                    Background="#FFFDF8"
+                    BorderBrush="#E5DED2"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="20"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsVisible="False">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16" MaxHeight="320">
+                    <TextBlock Grid.Row="0"
+                               Text="Settings"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="#1F2933" />
+                    
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="20" Margin="0,0,8,0">
+                            <!-- Left Column -->
+                            <StackPanel Grid.Column="0" Spacing="16">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Server URL" FontSize="12" Foreground="#6B7280" />
+                                    <TextBox Text="{Binding ApiBaseUrl}" PlaceholderText="https://mitsutake-model-space.hf.space" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="AI Model" FontSize="12" Foreground="#6B7280" />
+                                    <ComboBox ItemsSource="{Binding ModelOptions}" SelectedItem="{Binding SelectedModel}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Right Column -->
+                            <StackPanel Grid.Column="1" Spacing="16">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="AI moves first" FontSize="12" Foreground="#6B7280" />
+                                    <ToggleSwitch IsChecked="{Binding IsAiFirst}" Content="" OnContent="On" OffContent="Off" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Board Skin" FontSize="12" Foreground="#6B7280" />
+                                    <Button Content="{Binding SkinButtonText}" Command="{Binding ToggleSkinCommand}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,8,0,0">
+                        <Button Content="Cancel" Command="{Binding CloseSettingsCommand}" HorizontalAlignment="Stretch" />
+                        <Button Grid.Column="1" Classes="primary" Content="Apply" Command="{Binding ApplySettingsCommand}" HorizontalAlignment="Stretch" />
+                    </Grid>
+                </Grid>
+                </Border>
+            </Panel>
+        </Border>
+
+        <!-- TOAST / SNACKBAR -->
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,80"
+                Background="#1F2933"
+                CornerRadius="8"
+                Padding="16,10"
+                ZIndex="200"
+                IsVisible="{Binding IsToastVisible}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="✓" Foreground="#10B981" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ToastMessage}" Foreground="#FFFDF8" FontSize="13" FontWeight="Medium" VerticalAlignment="Center" />
+            </StackPanel>
         </Border>
     </Grid>
 </UserControl>

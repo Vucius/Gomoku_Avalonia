@@ -55,7 +55,16 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     private string _statusText = "Ready";
 
     [ObservableProperty]
-    private string _hintText = "Hint: None";
+    private string _statusColor = "#10B981";
+
+    [ObservableProperty]
+    private bool _isToastVisible;
+
+    [ObservableProperty]
+    private string _toastMessage = string.Empty;
+
+    [ObservableProperty]
+    private string _hintText = "Hint: —";
 
     [ObservableProperty]
     private string _networkStatusText = "Ready";
@@ -110,7 +119,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
 
     public string SkinButtonText => BoardSkin == BoardSkin.Wood ? "Cyberpunk" : "Wood";
 
-    public string OpeningText => IsAiFirst ? "AI plays Black" : "You play Black";
+    public string OpeningText => IsAiFirst ? "AI plays as Black" : "You play as Black";
 
     public string BusyText => IsBusy ? "AI is thinking..." : string.Empty;
 
@@ -119,7 +128,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     public string CompactScoreText => $"You {PlayerWins} / AI {AiWins} / Draw {Draws}";
 
     public string MoveLogText => MoveLog.Count == 0
-        ? "Last move: None"
+        ? "Last move: —"
         : $"Last move: {MoveLog[^1].Summary}";
 
     private int HumanPlayer => IsAiFirst ? -1 : 1;
@@ -163,6 +172,22 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         SaveLocalState();
     }
 
+    partial void OnStatusTextChanged(string value)
+    {
+        if (value.Contains("thinking") || value.Contains("Waiting") || value.Contains("Checking"))
+        {
+            StatusColor = "#F59E0B";
+        }
+        else if (value.Contains("win") || value.Contains("Draw") || value.Contains("failed") || value.Contains("Error") || value.Contains("Offline") || value.Contains("invalid"))
+        {
+            StatusColor = "#EF4444";
+        }
+        else
+        {
+            StatusColor = "#10B981";
+        }
+    }
+
     [RelayCommand]
     private async Task NewGameAsync()
     {
@@ -176,20 +201,27 @@ public partial class MainViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task PlaceHumanMoveAsync(BoardPoint point)
     {
-        if (IsBusy || IsGameOver || _engine.Board[point.Row, point.Col] != 0)
+        if (IsBusy || IsGameOver)
         {
+            return;
+        }
+
+        if (_engine.Board[point.Row, point.Col] != 0)
+        {
+            _ = _soundService.PlayErrorAsync();
             return;
         }
 
         HintMove = null;
-        HintText = "Hint: None";
+        HintText = "Hint: —";
         if (!_engine.MakeMove(point.Row, point.Col, HumanPlayer))
         {
+            _ = _soundService.PlayErrorAsync();
             return;
         }
 
         AddMoveLog(point, HumanPlayer, isAiMove: false);
-        await _soundService.PlayMoveAsync();
+        await _soundService.PlayMoveAsync(HumanPlayer == 1);
         RefreshBoard();
 
         if (HandleTerminalState(point, humanJustMoved: true))
@@ -221,7 +253,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         IsGameOver = false;
         WinningCells = [];
         HintMove = null;
-        HintText = "Hint: None";
+        HintText = "Hint: —";
         StatusText = "Move undone.";
         RefreshBoard();
     }
@@ -275,7 +307,21 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         ApiBaseUrl = string.IsNullOrWhiteSpace(ApiBaseUrl) ? GomokuApiClient.DefaultBaseUrl : ApiBaseUrl.Trim().TrimEnd('/');
         SaveLocalState();
         IsSettingsOpen = false;
-        StatusText = "Settings saved.";
+        _ = ShowToastAsync("Settings saved.");
+    }
+
+    private async Task ShowToastAsync(string message)
+    {
+        ToastMessage = message;
+        IsToastVisible = true;
+        try
+        {
+            await Task.Delay(1500, _shutdown.Token);
+            IsToastVisible = false;
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     private async Task RequestAiMoveAsync(bool isOpeningMove)
@@ -293,11 +339,12 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 if (move is null || !_engine.MakeMove(move.Value.Row, move.Value.Col, AiPlayer))
                 {
                     StatusText = "AI returned an invalid move.";
+                    _ = _soundService.PlayErrorAsync();
                     return;
                 }
 
                 AddMoveLog(move.Value, AiPlayer, isAiMove: true, result.Confidence);
-                await _soundService.PlayMoveAsync();
+                await _soundService.PlayMoveAsync(AiPlayer == 1);
                 RefreshBoard();
                 HandleTerminalState(move.Value, humanJustMoved: false);
             },
@@ -413,14 +460,15 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             {
                 PlayerWins++;
                 StatusText = "You win.";
+                _ = _soundService.PlayWinAsync();
             }
             else
             {
                 AiWins++;
                 StatusText = "AI wins.";
+                _ = _soundService.PlayLoseAsync();
             }
 
-            _ = _soundService.PlayWinAsync();
             return true;
         }
 
@@ -429,6 +477,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             Draws++;
             IsGameOver = true;
             StatusText = "Draw game.";
+            _ = _soundService.PlayErrorAsync();
             return true;
         }
 
@@ -462,7 +511,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         WinningCells = [];
         LastMove = null;
         HintMove = null;
-        HintText = "Hint: None";
+        HintText = "Hint: —";
         StatusText = OpeningText;
         RefreshBoard();
     }
@@ -511,7 +560,8 @@ public partial class MainViewModel : ViewModelBase, IDisposable
             Draws = state.Draws;
             ApiBaseUrl = string.IsNullOrWhiteSpace(state.ApiBaseUrl) ? GomokuApiClient.DefaultBaseUrl : state.ApiBaseUrl;
             SelectedModel = string.IsNullOrWhiteSpace(state.SelectedModel) ? "best_model" : state.SelectedModel;
-            BoardSkin = BoardSkin.Wood;
+            IsAiFirst = state.IsAiFirst;
+            BoardSkin = state.BoardSkin;
         }
         catch
         {
@@ -529,7 +579,7 @@ public partial class MainViewModel : ViewModelBase, IDisposable
                 Directory.CreateDirectory(directory);
             }
 
-            var state = new LocalState(PlayerWins, AiWins, Draws, ApiBaseUrl, SelectedModel, BoardSkin);
+            var state = new LocalState(PlayerWins, AiWins, Draws, ApiBaseUrl, SelectedModel, BoardSkin, IsAiFirst);
             File.WriteAllText(_stateFilePath, JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch
@@ -562,5 +612,6 @@ public partial class MainViewModel : ViewModelBase, IDisposable
         int Draws,
         string ApiBaseUrl,
         string SelectedModel,
-        BoardSkin BoardSkin);
+        BoardSkin BoardSkin,
+        bool IsAiFirst);
 }

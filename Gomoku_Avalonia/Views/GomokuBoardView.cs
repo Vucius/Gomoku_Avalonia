@@ -109,6 +109,28 @@ public sealed class GomokuBoardView : Control
         base.OnDetachedFromVisualTree(e);
     }
 
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        double width = availableSize.Width;
+        double height = availableSize.Height;
+        
+        if (double.IsInfinity(width) && double.IsInfinity(height))
+        {
+            return new Size(400, 400);
+        }
+        if (double.IsInfinity(width))
+        {
+            return new Size(height, height);
+        }
+        if (double.IsInfinity(height))
+        {
+            return new Size(width, width);
+        }
+        
+        double side = Math.Min(width, height);
+        return new Size(side, side);
+    }
+
     public override void Render(DrawingContext context)
     {
         base.Render(context);
@@ -144,7 +166,17 @@ public sealed class GomokuBoardView : Control
     {
         if (Skin == BoardSkin.Cyberpunk)
         {
-            context.DrawRectangle(Brush("#090f1d"), null, metrics.BoardRect, 10, 10);
+            var bgGradient = new RadialGradientBrush
+            {
+                Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                GradientStops =
+                {
+                    new GradientStop(Color.Parse("#1a223a"), 0.0),
+                    new GradientStop(Color.Parse("#0b0f19"), 1.0)
+                }
+            };
+
+            context.DrawRectangle(bgGradient, null, metrics.BoardRect, 10, 10);
             for (var i = 0; i < 42; i++)
             {
                 var x = metrics.BoardRect.X + (i * 67 % Math.Max(1, (int)metrics.BoardRect.Width));
@@ -152,13 +184,13 @@ public sealed class GomokuBoardView : Control
                 context.DrawEllipse(Brush("#554ae6ff"), null, new Point(x, y), 1.2, 1.2);
             }
 
-            context.DrawRectangle(Brush("#101827"), new Pen(Brush("#992ff3ff"), 2), metrics.BoardRect, 8, 8);
+            context.DrawRectangle(null, new Pen(Brush("#664f6ef7"), 2), metrics.BoardRect, 8, 8);
             return;
         }
 
         var shadowRect = metrics.BoardRect.Translate(new Vector(0, 3));
-        context.DrawRectangle(Brush("#240f1720"), null, shadowRect, 12, 12);
-        context.DrawRectangle(Brush("#e5bc78"), new Pen(Brush("#8a6b4828"), 1.2), metrics.BoardRect, 10, 10);
+        context.DrawRectangle(Brush("#140f1720"), null, shadowRect, 12, 12);
+        context.DrawRectangle(Brush("#e7c681"), new Pen(Brush("#e5ded2"), 1.0), metrics.BoardRect, 10, 10);
         context.DrawRectangle(Brush("#22fff8ea"), null, metrics.BoardRect.Deflate(5), 7, 7);
 
         for (var i = 0; i < 22; i++)
@@ -166,7 +198,7 @@ public sealed class GomokuBoardView : Control
             var y = metrics.BoardRect.Y + 10 + (metrics.BoardRect.Height - 20) * i / 21.0;
             var start = new Point(metrics.BoardRect.X + 12, y);
             var end = new Point(metrics.BoardRect.Right - 12, y + Math.Sin(i * 0.8) * 3);
-            context.DrawLine(new Pen(Brush("#48613a19"), 0.8), start, end);
+            context.DrawLine(new Pen(Brush("#24613a19"), 0.6), start, end);
         }
     }
 
@@ -174,7 +206,7 @@ public sealed class GomokuBoardView : Control
     {
         var gridPen = Skin == BoardSkin.Cyberpunk
             ? new Pen(Brush("#4edfff"), 1.2)
-            : new Pen(Brush("#aa4a2f19"), 0.95);
+            : new Pen(Brush("#664a2f19"), 0.8);
 
         for (var i = 0; i < GomokuEngine.BoardSize; i++)
         {
@@ -184,13 +216,13 @@ public sealed class GomokuBoardView : Control
             context.DrawLine(gridPen, new Point(metrics.Origin.X, y), new Point(metrics.GridEnd.X, y));
         }
 
-        var starBrush = Skin == BoardSkin.Cyberpunk ? Brush("#e9faff") : Brush("#9a3c2413");
+        var starBrush = Skin == BoardSkin.Cyberpunk ? Brush("#e9faff") : Brush("#b33c2413");
         foreach (var row in new[] { 3, 7, 11 })
         {
             foreach (var col in new[] { 3, 7, 11 })
             {
                 var center = metrics.CellCenter(row, col);
-                context.DrawEllipse(starBrush, null, center, 3.3, 3.3);
+                context.DrawEllipse(starBrush, null, center, 4.0, 4.0);
             }
         }
     }
@@ -203,7 +235,7 @@ public sealed class GomokuBoardView : Control
         {
             var center = metrics.CellCenter(hint.Row, hint.Col);
             var radius = metrics.Gap * (0.46 + 0.12 * pulse);
-            context.DrawEllipse(null, new Pen(Brush("#3975a85e"), 2.4), center, radius, radius);
+            context.DrawEllipse(Brush("#4075a85e"), new Pen(Brush("#8875a85e"), 2.4), center, radius, radius);
         }
 
         if (LastMove is { } lastMove)
@@ -247,10 +279,29 @@ public sealed class GomokuBoardView : Control
     {
         if (Skin == BoardSkin.Cyberpunk)
         {
-            var glow = player == 1 ? "#8831e7ff" : "#88ff3c7d";
-            var fill = player == 1 ? "#61efff" : "#ff5f8e";
-            context.DrawEllipse(Brush(glow), null, center, radius * 1.22, radius * 1.22);
-            context.DrawEllipse(Brush(fill), new Pen(Brush("#ccffffff"), isWinning ? 3 : 1), center, radius, radius);
+            var glow = player == 1 ? "#554f6ef7" : "#55ef4444";
+            context.DrawEllipse(Brush(glow), null, center, radius * 1.25, radius * 1.25);
+
+            var gradient = new RadialGradientBrush
+            {
+                Center = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                GradientStops = new GradientStops()
+            };
+
+            if (player == 1)
+            {
+                gradient.GradientStops.Add(new GradientStop(Color.Parse("#1e293b"), 0.3));
+                gradient.GradientStops.Add(new GradientStop(Color.Parse("#3b82f6"), 0.75));
+                gradient.GradientStops.Add(new GradientStop(Color.Parse("#4f6ef7"), 1.0));
+            }
+            else
+            {
+                gradient.GradientStops.Add(new GradientStop(Color.Parse("#ffffff"), 0.3));
+                gradient.GradientStops.Add(new GradientStop(Color.Parse("#dc2626"), 0.75));
+                gradient.GradientStops.Add(new GradientStop(Color.Parse("#ef4444"), 1.0));
+            }
+
+            context.DrawEllipse(gradient, new Pen(Brush("#ccffffff"), isWinning ? 3 : 1), center, radius, radius);
             return;
         }
 
